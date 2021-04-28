@@ -8,26 +8,36 @@ import (
 	"os"
 )
 
+var start = 3500
+var end = 4117
+var path = "files/pdfs/"
+
 func main() {
-	//TODO: Use Range from 3500 to 4117 to create these dynamically
-	//after being defined up top
-	fileLocation := "http://mse.co.mw/index.php?route=market/download/report&rid=3500"
-	//file location should be in files/pdfs/... and then files/csv/...
-	fileName := "3500.pdf"
-
-	//Keep these in a function
-	file, err := os.Create(fileName)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	//Reuse the client
 	client := http.Client{
 		CheckRedirect: func(r *http.Request, via []*http.Request) error {
 			r.URL.Opaque = r.URL.Path
 			return nil
 		},
+	}
+
+	for i := start; i <= end; i++ {
+		getPdf(i, &client)
+	}
+}
+
+func getPdf(pos int, client *http.Client) {
+	fileLocation := fmt.Sprint("http://mse.co.mw/index.php?route=market/download/report&rid=", pos)
+
+	fileName := fmt.Sprint(path, pos, ".pdf")
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		os.MkdirAll(path, 0700)
+	}
+
+	file, err := os.Create(fileName)
+
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	resp, err := client.Get(fileLocation)
@@ -40,8 +50,11 @@ func main() {
 
 	size, err := io.Copy(file, resp.Body)
 
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	defer file.Close()
 
-	//To act like our log
 	fmt.Printf("Downloaded a file %s with size %d\n", fileName, size)
 }
