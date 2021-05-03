@@ -14,9 +14,7 @@ import (
 var CONFIG Configuration
 
 func initConfig() {
-	viper.AddConfigPath(".")
-	viper.SetConfigName("app")
-	viper.SetConfigType("env")
+	viper.SetConfigFile(".env")
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("Error reading config")
