@@ -8,22 +8,36 @@ import (
 	"os"
 
 	"github.com/sirsean/go-pool"
+	"github.com/spf13/viper"
 )
 
-//TODO: Get these from .env
-var start = 3500
-var end = 4117
-var path = "files/pdfs/"
+var CONFIG Configuration
+
+func initConfig() {
+	viper.AddConfigPath(".")
+    viper.SetConfigName("app")
+    viper.SetConfigType("env")
+
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("Error reading config")
+	}
+
+	err := viper.Unmarshal(&CONFIG)
+
+	if err != nil {
+		log.Fatal()
+	}
+}
 
 func main() {
-
+	initConfig()
 	//Go Pool does the trick!!!
-	p := pool.NewPool(100, 10) //values from env
+	p := pool.NewPool(CONFIG.QUEUE_SIZE, CONFIG.WORKER_NUM)
 	p.Start()
-	for i := start; i <= end; i++ {
+	for i := CONFIG.START; i <= CONFIG.START; i++ {
 		p.Add(FileDownloader{
-			fmt.Sprint("http://mse.co.mw/index.php?route=market/download/report&rid=", i), //Grab this from env
-			fmt.Sprint(path, i, ".pdf"),
+			fmt.Sprint(CONFIG.MSE_URL, i),
+			fmt.Sprint(CONFIG.RAW_PDF_PATH, i, ".pdf"),
 			Client,
 		})
 	}
@@ -37,8 +51,8 @@ type FileDownloader struct {
 }
 
 func (u FileDownloader) Perform() {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		os.MkdirAll(path, 0700)
+	if _, err := os.Stat(CONFIG.RAW_PDF_PATH); os.IsNotExist(err) {
+		os.MkdirAll(CONFIG.RAW_PDF_PATH, 0700)
 	}
 
 	file, err := os.Create(u.FileName)
