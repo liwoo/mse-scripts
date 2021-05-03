@@ -15,8 +15,8 @@ var CONFIG Configuration
 
 func initConfig() {
 	viper.AddConfigPath(".")
-    viper.SetConfigName("app")
-    viper.SetConfigType("env")
+	viper.SetConfigName("app")
+	viper.SetConfigType("env")
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("Error reading config")
@@ -79,7 +79,19 @@ func (u FileDownloader) Perform() {
 		log.Fatal(err)
 	}
 
-	defer file.Close()
+	defer func() {
+		cerr := file.Close()
+		if err == nil {
+			err = cerr
+		}
+
+		if size < 49000 || size > 80000 {
+			e := os.Remove(u.FileName)
+			if e != nil {
+				log.Fatal(e)
+			}
+		}
+	}()
 
 	fmt.Printf("Downloaded a file %s with size %d\n", u.FileName, size)
 }
