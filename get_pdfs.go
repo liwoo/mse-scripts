@@ -89,6 +89,10 @@ func (u FileDownloader) Perform() {
 				log.Fatal(e)
 			}
 		}
+
+		//do csv conversion
+		
+		//close
 	}()
 
 	fmt.Printf("Downloaded a file %s with size %d\n", u.FileName, size)
