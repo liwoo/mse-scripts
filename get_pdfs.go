@@ -7,11 +7,13 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/pdftables/go-pdftables-api/pkg/client"
 	"github.com/sirsean/go-pool"
 	"github.com/spf13/viper"
 )
 
 var CONFIG Configuration
+var clientCSV client.Client
 
 func initConfig() {
 	viper.SetConfigFile(".env")
@@ -25,10 +27,25 @@ func initConfig() {
 	if err != nil {
 		log.Fatal()
 	}
+
+	clientCSV = client.Client{
+		APIKey:     CONFIG.PDFTABLES_API_KEY,
+		HTTPClient: http.DefaultClient,
+	}
+}
+
+func folderCheck() {
+	if _, err := os.Stat(CONFIG.RAW_PDF_PATH); os.IsNotExist(err) {
+		os.MkdirAll(CONFIG.RAW_PDF_PATH, 0700)
+	}
+	if _, err := os.Stat(CONFIG.RAW_CSV_PATH); os.IsNotExist(err) {
+		os.MkdirAll(CONFIG.RAW_CSV_PATH, 0700)
+	}
 }
 
 func main() {
 	initConfig()
+	folderCheck()
 	//Go Pool does the trick!!!
 	p := pool.NewPool(CONFIG.QUEUE_SIZE, CONFIG.WORKER_NUM)
 	p.Start()
@@ -36,6 +53,7 @@ func main() {
 		p.Add(FileDownloader{
 			fmt.Sprint(CONFIG.MSE_URL, i),
 			fmt.Sprint(CONFIG.RAW_PDF_PATH, i, ".pdf"),
+			fmt.Sprint(CONFIG.RAW_CSV_PATH, i, ".csv"),
 			Client,
 		})
 	}
@@ -43,16 +61,13 @@ func main() {
 }
 
 type FileDownloader struct {
-	FileUrl  string
-	FileName string
-	Client   http.Client
+	FileUrl     string
+	FileName    string
+	FileNameCSV string
+	Client      http.Client
 }
 
 func (u FileDownloader) Perform() {
-	if _, err := os.Stat(CONFIG.RAW_PDF_PATH); os.IsNotExist(err) {
-		os.MkdirAll(CONFIG.RAW_PDF_PATH, 0700)
-	}
-
 	file, err := os.Create(u.FileName)
 
 	if err != nil {
@@ -82,18 +97,42 @@ func (u FileDownloader) Perform() {
 		if err == nil {
 			err = cerr
 		}
-
 		if size < 49000 || size > 80000 {
 			e := os.Remove(u.FileName)
 			if e != nil {
 				log.Fatal(e)
 			}
+		} else {
+			convertCSV(u.FileName, u.FileNameCSV)
 		}
-
-		//do csv conversion
-		
-		//close
 	}()
 
 	fmt.Printf("Downloaded a file %s with size %d\n", u.FileName, size)
+}
+
+func convertCSV(filename string, FileNameCSV string) {
+	file, err := os.Open(filename)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer file.Close()
+	csvFile, err := os.Create(FileNameCSV)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	converted, err := clientCSV.Do(file, client.FormatCSV)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = io.Copy(csvFile, converted)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer csvFile.Close()
+
 }
