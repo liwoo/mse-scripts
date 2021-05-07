@@ -101,36 +101,33 @@ func (u FileDownloader) Perform() {
 				log.Fatal(e)
 			}
 		} else {
-			convertCSV(u.FileName, u.FileNameCSV)
+			func() {
+				file, err := os.Open(u.FileName)
+
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				defer file.Close()
+				csvFile, err := os.Create(u.FileNameCSV)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				converted, err := clientCSV.Do(file, client.FormatCSV)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				_, err = io.Copy(csvFile, converted)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				defer csvFile.Close()
+			}()
 		}
 	}()
 
 	fmt.Printf("Downloaded a file %s with size %d\n", u.FileName, size)
-}
-
-func convertCSV(filename string, FileNameCSV string) {
-	file, err := os.Open(filename)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer file.Close()
-	csvFile, err := os.Create(FileNameCSV)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	converted, err := clientCSV.Do(file, client.FormatCSV)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err = io.Copy(csvFile, converted)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer csvFile.Close()
-
 }
