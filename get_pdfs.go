@@ -34,18 +34,16 @@ func initConfig() {
 	}
 }
 
-func folderCheck() {
-	if _, err := os.Stat(CONFIG.RAW_PDF_PATH); os.IsNotExist(err) {
-		os.MkdirAll(CONFIG.RAW_PDF_PATH, 0700)
-	}
-	if _, err := os.Stat(CONFIG.RAW_CSV_PATH); os.IsNotExist(err) {
-		os.MkdirAll(CONFIG.RAW_CSV_PATH, 0700)
+func folderCheck(folder string) {
+	if _, err := os.Stat(folder); os.IsNotExist(err) {
+		os.MkdirAll(folder, 0700)
 	}
 }
 
 func main() {
 	initConfig()
-	folderCheck()
+	folderCheck(CONFIG.RAW_PDF_PATH)
+	folderCheck(CONFIG.RAW_CSV_PATH)
 	//Go Pool does the trick!!!
 	p := pool.NewPool(CONFIG.QUEUE_SIZE, CONFIG.WORKER_NUM)
 	p.Start()
