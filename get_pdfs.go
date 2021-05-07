@@ -48,7 +48,7 @@ func main() {
 	p := pool.NewPool(CONFIG.QUEUE_SIZE, CONFIG.WORKER_NUM)
 	p.Start()
 	for i := CONFIG.START; i <= CONFIG.END; i++ {
-		p.Add(FileDownloader{
+		p.Add(MSEFileDownloaderAndConverter{
 			fmt.Sprint(CONFIG.MSE_URL, i),
 			fmt.Sprint(CONFIG.RAW_PDF_PATH, i, ".pdf"),
 			fmt.Sprint(CONFIG.RAW_CSV_PATH, i, ".csv"),
@@ -58,14 +58,14 @@ func main() {
 	p.Close()
 }
 
-type FileDownloader struct {
+type MSEFileDownloaderAndConverter struct {
 	FileUrl     string
 	FileName    string
 	FileNameCSV string
 	Client      http.Client
 }
 
-func (u FileDownloader) Perform() {
+func (u MSEFileDownloaderAndConverter) Perform() {
 	file, err := os.Create(u.FileName)
 
 	if err != nil {
