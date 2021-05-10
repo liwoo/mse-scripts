@@ -1,6 +1,4 @@
 package main
-
-
 type Configuration struct {
 	MSE_URL string
 	PDFTABLES_API_KEY string
