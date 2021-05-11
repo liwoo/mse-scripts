@@ -6,6 +6,7 @@ type Configuration struct {
 	END int
 	RAW_PDF_PATH string
 	RAW_CSV_PATH string
+	ERROR_FILE_PATH string
 	QUEUE_SIZE int
 	WORKER_NUM int
 }

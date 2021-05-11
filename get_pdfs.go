@@ -44,6 +44,7 @@ func main() {
 	initConfig()
 	folderCheck(CONFIG.RAW_PDF_PATH)
 	folderCheck(CONFIG.RAW_CSV_PATH)
+	folderCheck(CONFIG.ERROR_FILE_PATH)
 
 	p := pool.NewPool(CONFIG.QUEUE_SIZE, CONFIG.WORKER_NUM)
 	p.Start()
