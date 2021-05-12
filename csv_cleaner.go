@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -32,10 +33,17 @@ type DailyCompanyRate struct {
 	SHARES     float64 `json:"shares"`
 }
 
-func Clean(csvFile string, errorPath string) ([]DailyCompanyRate, []string) {
+type CleanedData struct {
+	dailyRates []DailyCompanyRate
+	date       string
+	errors     []string
+}
+
+func Clean(csvFile string, errorPath string) CleanedData {
 	var csvRaw []string
 	var rates []DailyCompanyRate
 	var errors []string
+	var date string
 
 	file, err := os.Open(csvFile)
 
@@ -52,6 +60,9 @@ func Clean(csvFile string, errorPath string) ([]DailyCompanyRate, []string) {
 	for scanner.Scan() {
 		//do work
 		line := scanner.Text()
+		if i == 8 {
+			date = GetDate(line)
+		}
 
 		if i > 26 && i < 43 {
 			csvRaw = append(csvRaw, line)
@@ -104,7 +115,11 @@ func Clean(csvFile string, errorPath string) ([]DailyCompanyRate, []string) {
 		logErrors(errors, errorPath)
 	}
 
-	return rates, errors
+	return CleanedData{
+		dailyRates: rates,
+		date:       date,
+		errors:     errors,
+	}
 }
 
 func logErrors(errors []string, path string) {
@@ -150,4 +165,19 @@ func Verify(rate []string) bool {
 
 func isEmpty(value string) bool {
 	return len(value) <= 0
+}
+
+func GetDate(line string) string {
+	r, _ := regexp.Compile("[0-9][0-9]/[0-9][0-9]/[0-9][0-9][0-9][0-9]")
+	if r.Match([]byte(line)) {
+		match := r.FindString(line)
+
+		if isEmpty(match) {
+			return "now"
+		}
+
+		return match
+	} else {
+		return "now"
+	}
 }

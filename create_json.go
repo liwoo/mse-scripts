@@ -28,14 +28,14 @@ type CodeGraph struct {
 	Closing float64 `json:"closing"`
 }
 
-func createJson(dailyRates []DailyCompanyRate) (string, string) {
+func createJson(dailyRates []DailyCompanyRate, date string) (string, string) {
 	dailyStatsRaw, err := json.Marshal(dailyRates)
 	var codeGraphsRaw []string
 	if err != nil {
 		log.Fatalf("could not convert to json")
 	}
 
-	dailyStatsJson := fmt.Sprintf("{ \"dates\": %s}", dailyStatsRaw)
+	dailyStatsJson := fmt.Sprintf("{ \"%s\": %s}", date, dailyStatsRaw)
 
 	for _, rate := range dailyRates {
 		graph := &CodeGraph{
