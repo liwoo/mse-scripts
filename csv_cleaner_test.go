@@ -4,7 +4,7 @@ import "testing"
 
 func Test_CSV_Cleaner(t *testing.T) {
 	csvFile := "files/csv/4115.csv"
-	data := Clean(csvFile, "files/errors/")
+	data := Clean(csvFile, "files/errors/", "files/cleaned/")
 	got := len(data.errors) > 0
 	wanted := false
 

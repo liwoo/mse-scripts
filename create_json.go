@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -28,7 +29,7 @@ type CodeGraph struct {
 	Closing float64 `json:"closing"`
 }
 
-func createJson(dailyRates []DailyCompanyRate, date string) (string, string) {
+func createJson(dailyRates []DailyCompanyRate, date string, jsonPath string) (string, string) {
 	dailyStatsRaw, err := json.Marshal(dailyRates)
 	var codeGraphsRaw []string
 	if err != nil {
@@ -50,6 +51,21 @@ func createJson(dailyRates []DailyCompanyRate, date string) (string, string) {
 		codeGraphsRaw = append(codeGraphsRaw, value)
 	}
 	codeGraphsJson := fmt.Sprintf("[%s]", strings.Join(codeGraphsRaw, ","))
-
+	saveJson(dailyStatsJson, fmt.Sprintf("%s%s-daily", jsonPath, strings.ReplaceAll(date, "/", "-")))
+	saveJson(codeGraphsJson, fmt.Sprintf("%s%s-graph", jsonPath, strings.ReplaceAll(date, "/", "-")))
 	return dailyStatsJson, codeGraphsJson
+}
+
+func saveJson(content string, fileName string) {
+	jsonFile, err := os.Create(fmt.Sprintf("%s.json", fileName))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer jsonFile.Close()
+
+	_, errr := jsonFile.WriteString(content)
+	if errr != nil {
+		log.Fatal(err)
+	}
 }

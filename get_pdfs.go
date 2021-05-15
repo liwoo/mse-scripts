@@ -45,6 +45,8 @@ func main() {
 	folderCheck(CONFIG.RAW_PDF_PATH)
 	folderCheck(CONFIG.RAW_CSV_PATH)
 	folderCheck(CONFIG.ERROR_FILE_PATH)
+	folderCheck(CONFIG.CLEANED_CSV_PATH)
+	folderCheck(CONFIG.CLEANED_JSON_PATH)
 
 	p := pool.NewPool(CONFIG.QUEUE_SIZE, CONFIG.WORKER_NUM)
 	p.Start()

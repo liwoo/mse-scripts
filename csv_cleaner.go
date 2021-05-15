@@ -10,7 +10,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type DailyCompanyRate struct {
@@ -39,7 +38,7 @@ type CleanedData struct {
 	errors     []string
 }
 
-func Clean(csvFile string, errorPath string) CleanedData {
+func Clean(csvFile string, errorPath string, cleanCSVPath string) CleanedData {
 	var csvRaw []string
 	var rates []DailyCompanyRate
 	var errors []string
@@ -112,8 +111,32 @@ func Clean(csvFile string, errorPath string) CleanedData {
 	if len(errors) > 0 {
 		affected := fmt.Sprintf("File: %q", csvFile)
 		errors = append([]string{affected}, errors...)
-		logErrors(errors, errorPath)
+		logErrors(errors, errorPath, date)
 	}
+
+	func() {
+		file, err := os.Create(fmt.Sprintf("%s%s.csv", cleanCSVPath, strings.ReplaceAll(date, "/", "-")))
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer file.Close()
+		w := csv.NewWriter(file)
+		for _, rate := range rates {
+			if err := w.Write([]string{
+				rate.NO, rate.HIGH, rate.LOW, rate.CODE,
+				fmt.Sprint(rate.BUY), fmt.Sprint(rate.SELL), fmt.Sprint(rate.PCP), fmt.Sprint(rate.TCP), fmt.Sprint(rate.VOL),
+				fmt.Sprint(rate.DIVNET), fmt.Sprint(rate.DIVYIELD), fmt.Sprint(rate.EEARNYIELD),
+				fmt.Sprint(rate.PERATIO), fmt.Sprint(rate.PBVRATION), fmt.Sprint(rate.CAP), fmt.Sprint(rate.PROFIT), fmt.Sprint(rate.SHARES)}); err != nil {
+				log.Fatalln("error writing record to csv:", err)
+			}
+		}
+
+		w.Flush()
+
+		if err := w.Error(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	return CleanedData{
 		dailyRates: rates,
@@ -122,8 +145,8 @@ func Clean(csvFile string, errorPath string) CleanedData {
 	}
 }
 
-func logErrors(errors []string, path string) {
-	f, err := os.Create(fmt.Sprintf("%s%s-error.txt", path, time.Now().Format("06-01-02 15-04-05")))
+func logErrors(errors []string, path string, date string) {
+	f, err := os.Create(fmt.Sprintf("%s%s-error.txt", path, strings.ReplaceAll(date, "/", "-")))
 	if err != nil {
 		log.Fatal(err)
 	}
