@@ -9,30 +9,9 @@ import (
 
 	"github.com/pdftables/go-pdftables-api/pkg/client"
 	"github.com/sirsean/go-pool"
-	"github.com/spf13/viper"
 )
 
-var CONFIG Configuration
 var clientCSV client.Client
-
-func initConfig() {
-	viper.SetConfigFile(".env")
-
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("Error reading config")
-	}
-
-	err := viper.Unmarshal(&CONFIG)
-
-	if err != nil {
-		log.Fatal()
-	}
-
-	clientCSV = client.Client{
-		APIKey:     CONFIG.PDFTABLES_API_KEY,
-		HTTPClient: http.DefaultClient,
-	}
-}
 
 func folderCheck(folder string) {
 	if _, err := os.Stat(folder); os.IsNotExist(err) {
@@ -40,8 +19,11 @@ func folderCheck(folder string) {
 	}
 }
 
-func main() {
-	initConfig()
+func GetPDFS() {
+	clientCSV = client.Client{
+		APIKey:     CONFIG.PDFTABLES_API_KEY,
+		HTTPClient: http.DefaultClient,
+	}
 	folderCheck(CONFIG.RAW_PDF_PATH)
 	folderCheck(CONFIG.RAW_CSV_PATH)
 	folderCheck(CONFIG.ERROR_FILE_PATH)

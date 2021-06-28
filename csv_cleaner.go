@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/sirsean/go-pool"
 )
 
 type DailyCompanyRate struct {
@@ -36,6 +39,47 @@ type CleanedData struct {
 	dailyRates []DailyCompanyRate
 	date       string
 	errors     []string
+}
+
+type MSECSVCleaner struct {
+	csvFile string
+	errorPath string
+	cleanCSVPath string
+}
+
+func CleanDownloadedCSV()  {
+	var files []string
+	root := CONFIG.RAW_CSV_PATH
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if filepath.Ext(path) != ".csv" {
+			return nil
+		}
+		files = append(files, path)
+		return nil
+	})
+	if err != nil {
+        panic(err)
+    }
+	p := pool.NewPool(CONFIG.QUEUE_SIZE, CONFIG.WORKER_NUM)
+	p.Start()
+
+	for _, file := range files {
+        p.Add(MSECSVCleaner{
+			csvFile: file,
+			errorPath: CONFIG.ERROR_FILE_PATH,
+			cleanCSVPath: CONFIG.CLEANED_CSV_PATH,
+		})
+    }
+	
+	p.Close()
+}
+
+func (u MSECSVCleaner) Perform() {
+	data := Clean(u.csvFile, u.errorPath, u.cleanCSVPath);
+	if len(data.errors) < 0 {
+		log.Fatalln("Cleaner has errors, ", data.errors)
+	}
+	createJson(data.dailyRates, data.date, CONFIG.CLEANED_JSON_PATH)
 }
 
 func Clean(csvFile string, errorPath string, cleanCSVPath string) CleanedData {
