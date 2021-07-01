@@ -9,8 +9,8 @@ import (
 type Configuration struct {
 	MSE_URL           string
 	PDFTABLES_API_KEY string
-	START             int
-	END               int
+	DOWLOADSTART             int
+	DOWNLOADEND               int
 	RAW_PDF_PATH      string
 	RAW_CSV_PATH      string
 	ERROR_FILE_PATH   string

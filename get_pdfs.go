@@ -33,7 +33,7 @@ func GetPDFS() {
 	p := pool.NewPool(CONFIG.QUEUE_SIZE, CONFIG.WORKER_NUM)
 	p.Start()
 
-	for i := CONFIG.START; i <= CONFIG.END; i++ {
+	for i := CONFIG.DOWLOADSTART; i <= CONFIG.DOWNLOADEND; i++ {
 		p.Add(MSEFileDownloader{
 			fmt.Sprint(CONFIG.MSE_URL, i),
 			fmt.Sprint(CONFIG.RAW_PDF_PATH, i, ".pdf"),

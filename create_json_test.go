@@ -9,8 +9,8 @@ func Create_JSON_Cleaner(t *testing.T) {
 	if len(data.errors) <= 0 {
 		t.Fatalf("Wanted %t but got %t", wanted, false)
 	}
-	dailys, codeGraphs := createJson(data.dailyRates, data.date, "files/json/")
-	got := len(dailys) > 0 && len(codeGraphs) > 0
+	dailys := createJson(data.dailyRates, data.date, "files/json/")
+	got := len(dailys) > 0
 
 	if got != wanted {
 		t.Fatalf("Wanted %t but got %t", wanted, got)

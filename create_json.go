@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 // TODO:  next script should store following json
@@ -25,35 +26,19 @@ import (
 //			}]
 
 type CodeGraph struct {
-	Date    int64   `json:"date"`
+	Date    time.Time   `json:"date"`
 	Closing float64 `json:"closing"`
 }
 
-func createJson(dailyRates []DailyCompanyRate, date string, jsonPath string) (string, string) {
+func createJson(dailyRates []DailyCompanyRate, date string, jsonPath string) (string) {
 	dailyStatsRaw, err := json.Marshal(dailyRates)
-	var codeGraphsRaw []string
 	if err != nil {
 		log.Fatalf("could not convert to json")
 	}
 
 	dailyStatsJson := fmt.Sprintf("{ \"%s\": %s}", date, dailyStatsRaw)
-
-	for _, rate := range dailyRates {
-		graph := &CodeGraph{
-			Date:    45554,
-			Closing: rate.SHARES,
-		}
-		graphJson, err := json.Marshal(graph)
-		if err != nil {
-			log.Fatalf("could not convert to json")
-		}
-		value := fmt.Sprintf("{\"%s\" : [%s]}", rate.CODE, string(graphJson))
-		codeGraphsRaw = append(codeGraphsRaw, value)
-	}
-	codeGraphsJson := fmt.Sprintf("[%s]", strings.Join(codeGraphsRaw, ","))
 	saveJson(dailyStatsJson, fmt.Sprintf("%s%s-daily", jsonPath, strings.ReplaceAll(date, "/", "-")))
-	saveJson(codeGraphsJson, fmt.Sprintf("%s%s-graph", jsonPath, strings.ReplaceAll(date, "/", "-")))
-	return dailyStatsJson, codeGraphsJson
+	return dailyStatsJson
 }
 
 func saveJson(content string, fileName string) {
