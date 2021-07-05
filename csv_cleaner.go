@@ -131,31 +131,30 @@ func Clean(csvFile string, errorPath string, cleanCSVPath string) CleanedData {
 	}
 
 	var rate DailyCompanyRate
-	for i, word := range records {
+	for _, word := range records {
 		if len(word) == 17 {
-			if Verify(word) {
-				rate.NO = strings.TrimSpace(word[0])
-				rate.HIGH = strings.TrimSpace(word[1])
-				rate.LOW = strings.TrimSpace(word[2])
-				rate.CODE = strings.TrimSpace(word[3])
-				rate.BUY = parseFloat(strings.TrimSpace(word[4]))
-				rate.SELL = parseFloat(strings.TrimSpace(word[5]))
-				rate.PCP = parseFloat(strings.TrimSpace(word[6]))
-				rate.TCP = parseFloat(strings.TrimSpace(word[7]))
-				rate.VOL = parseFloat(strings.TrimSpace(word[8]))
-				rate.DIVNET = parseFloat(strings.TrimSpace(word[9]))
-				rate.DIVYIELD = parseFloat(strings.TrimSpace(word[10]))
-				rate.EEARNYIELD = parseFloat(strings.TrimSpace(word[11]))
-				rate.PERATIO = parseFloat(strings.TrimSpace(word[12]))
-				rate.PBVRATION = parseFloat(strings.TrimSpace(word[13]))
-				rate.CAP = parseFloat(strings.TrimSpace(word[14]))
-				rate.PROFIT = parseFloat(strings.TrimSpace(word[15]))
-				rate.SHARES = parseFloat(strings.TrimSpace(word[16]))
-				rates = append(rates, rate)
-			} else {
-				errors = append(errors, fmt.Sprintf("line: %b values: %s", i, word))
+			_, err := Verify(word)
+			if err != nil {
+				errors = append(errors, err.Error())
 			}
-
+			rate.NO = strings.TrimSpace(word[0])
+			rate.HIGH = strings.TrimSpace(word[1])
+			rate.LOW = strings.TrimSpace(word[2])
+			rate.CODE = strings.TrimSpace(word[3])
+			rate.BUY = parseFloat(strings.TrimSpace(word[4]))
+			rate.SELL = parseFloat(strings.TrimSpace(word[5]))
+			rate.PCP = parseFloat(strings.TrimSpace(word[6]))
+			rate.TCP = parseFloat(strings.TrimSpace(word[7]))
+			rate.VOL = parseFloat(strings.TrimSpace(word[8]))
+			rate.DIVNET = parseFloat(strings.TrimSpace(word[9]))
+			rate.DIVYIELD = parseFloat(strings.TrimSpace(word[10]))
+			rate.EEARNYIELD = parseFloat(strings.TrimSpace(word[11]))
+			rate.PERATIO = parseFloat(strings.TrimSpace(word[12]))
+			rate.PBVRATION = parseFloat(strings.TrimSpace(word[13]))
+			rate.CAP = parseFloat(strings.TrimSpace(word[14]))
+			rate.PROFIT = parseFloat(strings.TrimSpace(word[15]))
+			rate.SHARES = parseFloat(strings.TrimSpace(word[16]))
+			rates = append(rates, rate)
 		}
 	}
 
@@ -228,15 +227,21 @@ func parseFloat(value string) float64 {
 	return f
 }
 
-func Verify(rate []string) bool {
+func Verify(rate []string) (bool, error) {
+	var err []string 
+	isValid := true
 	for i, value := range rate {
 		if i > 2 {
 			if isEmpty(value) {
-				return false
+				isValid = false
+				err = append(err, fmt.Sprintf("Failed to verify rate, missing fields. \n rate: %s \n null value on: %d", rate, i))
 			}
 		}
 	}
-	return true
+	if !isValid {
+		return false, errors.New(fmt.Sprint(err))
+	}
+	return isValid, nil
 }
 
 func isEmpty(value string) bool {
