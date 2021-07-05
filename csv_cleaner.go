@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/sirsean/go-pool"
 )
@@ -42,12 +44,12 @@ type CleanedData struct {
 }
 
 type MSECSVCleaner struct {
-	csvFile string
-	errorPath string
+	csvFile      string
+	errorPath    string
 	cleanCSVPath string
 }
 
-func CleanDownloadedCSV()  {
+func CleanDownloadedCSV() {
 	var files []string
 	root := CONFIG.RAW_CSV_PATH
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
@@ -58,24 +60,24 @@ func CleanDownloadedCSV()  {
 		return nil
 	})
 	if err != nil {
-        panic(err)
-    }
+		panic(err)
+	}
 	p := pool.NewPool(CONFIG.QUEUE_SIZE, CONFIG.WORKER_NUM)
 	p.Start()
 
 	for _, file := range files {
-        p.Add(MSECSVCleaner{
-			csvFile: file,
-			errorPath: CONFIG.ERROR_FILE_PATH,
+		p.Add(MSECSVCleaner{
+			csvFile:      file,
+			errorPath:    CONFIG.ERROR_FILE_PATH,
 			cleanCSVPath: CONFIG.CLEANED_CSV_PATH,
 		})
-    }
-	
+	}
+
 	p.Close()
 }
 
 func (u MSECSVCleaner) Perform() {
-	data := Clean(u.csvFile, u.errorPath, u.cleanCSVPath);
+	data := Clean(u.csvFile, u.errorPath, u.cleanCSVPath)
 	if len(data.errors) < 0 {
 		log.Fatalln("Cleaner has errors, ", data.errors)
 	}
@@ -87,6 +89,7 @@ func Clean(csvFile string, errorPath string, cleanCSVPath string) CleanedData {
 	var rates []DailyCompanyRate
 	var errors []string
 	var date string
+	docNum := getDocName(csvFile)
 
 	file, err := os.Open(csvFile)
 
@@ -104,7 +107,11 @@ func Clean(csvFile string, errorPath string, cleanCSVPath string) CleanedData {
 		//do work
 		line := scanner.Text()
 		if i == 8 {
-			date = GetDate(line)
+			d, err := GetDate(line, docNum)
+			if err != nil {
+				errors = append(errors, err.Error())
+			}
+			date = d
 		}
 
 		if i > 26 && i < 43 {
@@ -236,17 +243,36 @@ func isEmpty(value string) bool {
 	return len(value) <= 0
 }
 
-func GetDate(line string) string {
-	r, _ := regexp.Compile("[0-9][0-9]/[0-9][0-9]/[0-9][0-9][0-9][0-9]")
+func GetDate(line string, docNum string) (string, error) {
+	r, _ := regexp.Compile("\\d?\\d/\\d\\d/\\d\\d\\d\\d")
 	if r.Match([]byte(line)) {
 		match := r.FindString(line)
 
 		if isEmpty(match) {
-			return "now"
+			return docNum, errors.New("Could not find date match in string")
 		}
-
-		return match
+		fmt.Println(match)
+		t, err := time.Parse(checkDateFormat(match), match)
+		if err != nil {
+			fmt.Println(err)
+			return docNum, errors.New("Failed to parse date")
+		}
+		return t.Format("2006-01-02"), nil
 	} else {
-		return "now"
+		return docNum, errors.New(fmt.Sprintf("Line does not contain date, : %s", line))
 	}
+}
+
+func checkDateFormat(date string) string {
+	segs := strings.Split(date, "/")
+	if len(segs[0]) == 1 {
+		return "2/01/2006"
+	} else {
+		return "02/01/2006"
+	}
+}
+
+func getDocName(fileName string) string {
+	segs := strings.Split(fileName, ".")
+	return segs[0]
 }
