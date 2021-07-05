@@ -3,14 +3,14 @@ package main
 import (
 	"log"
 
-	"github.com/spf13/viper")
-
+	"github.com/spf13/viper"
+)
 
 type Configuration struct {
 	MSE_URL           string
 	PDFTABLES_API_KEY string
-	DOWLOADSTART             int
-	DOWNLOADEND               int
+	PDF_START_NO     int
+	PDF_END_NO       int
 	RAW_PDF_PATH      string
 	RAW_CSV_PATH      string
 	ERROR_FILE_PATH   string
@@ -33,5 +33,4 @@ func initConfig() {
 		log.Fatal()
 	}
 
-	
 }
