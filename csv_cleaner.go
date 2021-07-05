@@ -202,7 +202,9 @@ func logErrors(errors []string, path string, date string) {
 }
 
 func parseFloat(value string) float64 {
-
+	if strings.Contains(value, ",") {
+		value = strings.ReplaceAll(value, ",", "")
+	}
 	if strings.Contains(value, "(") {
 		raw := strings.ReplaceAll(value, "(", "")
 		raw = strings.ReplaceAll(raw, ")", "")
@@ -213,7 +215,7 @@ func parseFloat(value string) float64 {
 
 	f, err := strconv.ParseFloat(value, 64)
 	if err != nil {
-
+		fmt.Println(err)
 		return 0
 	}
 	return f
