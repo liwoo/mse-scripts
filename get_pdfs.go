@@ -20,6 +20,7 @@ func folderCheck(folder string) {
 }
 
 func GetPDFS() {
+	fmt.Println("Download started")
 	clientCSV = client.Client{
 		APIKey:     CONFIG.PDFTABLES_API_KEY,
 		HTTPClient: http.DefaultClient,
@@ -43,6 +44,7 @@ func GetPDFS() {
 	}
 
 	p.Close()
+	fmt.Println("Downloads complete")
 }
 
 type MSEFileDownloader struct {
@@ -54,7 +56,7 @@ type MSEFileDownloader struct {
 
 func (u MSEFileDownloader) Perform() {
 	notStandardDailyReport := func(size int64) bool {
-		return size < 49000 || size > 80000
+		return size < 40000 || size > 900000
 	}
 
 	file, err := os.Create(u.FileName)

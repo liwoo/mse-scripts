@@ -50,6 +50,7 @@ type MSECSVCleaner struct {
 }
 
 func CleanDownloadedCSV() {
+	fmt.Println("Started Cleaning")
 	var files []string
 	root := CONFIG.RAW_CSV_PATH
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
@@ -74,11 +75,12 @@ func CleanDownloadedCSV() {
 	}
 
 	p.Close()
+	fmt.Println("Cleaning Finished")
 }
 
 func (u MSECSVCleaner) Perform() {
 	data := Clean(u.csvFile, u.errorPath, u.cleanCSVPath)
-	if len(data.errors) < 0 {
+	if len(data.errors) > 0 {
 		log.Fatalln("Cleaner has errors, ", data.errors)
 	}
 	createJson(data.dailyRates, data.date, CONFIG.CLEANED_JSON_PATH)
@@ -228,7 +230,7 @@ func parseFloat(value string) float64 {
 }
 
 func Verify(rate []string) (bool, error) {
-	var err []string 
+	var err []string
 	isValid := true
 	for i, value := range rate {
 		if i > 2 {
@@ -249,22 +251,22 @@ func isEmpty(value string) bool {
 }
 
 func GetDate(line string, docNum string) (string, error) {
-	r, _ := regexp.Compile("\\d?\\d/\\d\\d/\\d\\d\\d\\d")
+	r, _ := regexp.Compile(`\d?\d/\d\d/\d\d\d\d`)
 	if r.Match([]byte(line)) {
 		match := r.FindString(line)
 
 		if isEmpty(match) {
-			return docNum, errors.New("Could not find date match in string")
+			return docNum, errors.New("COULD NOT FIND DATE MATCH IN STRING")
 		}
 		fmt.Println(match)
 		t, err := time.Parse(checkDateFormat(match), match)
 		if err != nil {
 			fmt.Println(err)
-			return docNum, errors.New("Failed to parse date")
+			return docNum, errors.New("FAILED TO PARSE DATE")
 		}
 		return t.Format("2006-01-02"), nil
 	} else {
-		return docNum, errors.New(fmt.Sprintf("Line does not contain date, : %s", line))
+		return docNum, fmt.Errorf("LINE DOES NOT CONTAIN DATE, : %s", line)
 	}
 }
 
